@@ -60,7 +60,7 @@ ENV PATH $GEM_HOME/bin:$GEM_HOME/gems/bin:$PATH
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
 # Install Ruby, Rake, Node and Yarn for Idean build tooling
-RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
+RUN curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash - \
 && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
 && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list \
 && sudo apt-get update \
@@ -68,7 +68,11 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
 && DEBIAN_FRONTEND=noninteractive \
   sudo apt-get install -y \
     nodejs \
-    yarn=1.22.21 \
+&& curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
+&& echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list \
+&& sudo apt-get update \
+&& sudo apt-get install -y yarn \
+&& sudo yarn policies set-version 1.22.21 \
 && sudo apt-get clean \
 && sudo rm -rf /var/lib/apt/lists/* \
 && sudo wget https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY} -O /usr/bin/yq \
@@ -84,8 +88,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
 && echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc \
 && export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH" \
 && exec $SHELL \
-&& rbenv install 2.7.0 \
-&& rbenv global 2.7.0 \
+&& rbenv install 3.0.0 \
+&& rbenv global 3.0.0 \
 && ruby -v \
 && echo "gem: --no-document" >> ~/.gemrc \
 && gem update --system \
@@ -94,8 +98,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash - \
     rails \
     rake
 
-RUN GITHUB_RUNNER_VERSION=$(curl --silent "https://api.github.com/repos/adaptivelab/runner/releases/latest" | jq -r '.tag_name[1:]') \
-    && curl -Ls https://github.com/adaptivelab/runner/releases/download/v${GITHUB_RUNNER_VERSION}/actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz | tar xz \
+RUN GITHUB_RUNNER_VERSION=$(curl --silent "https://api.github.com/repos/adaptivelab/ci-runner/releases/latest" | jq -r '.tag_name[1:]') \
+    && curl -Ls https://github.com/adaptivelab/ci-runner/releases/download/v${GITHUB_RUNNER_VERSION}/actions-runner-linux-x64-${GITHUB_RUNNER_VERSION}.tar.gz | tar xz \
     && sudo ./bin/installdependencies.sh
 
 COPY --chown=github:github entrypoint.sh runsvc.sh ./
