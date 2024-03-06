@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: smartynx-runner
+  name: smartynx-runner
+  namespace: ci-runner
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: github-runner
+  template:
+    metadata:
+      labels:
+        app: github-runner
+    spec:
+      containers:
+      - env:
+        - name: GITHUB_OWNER
+          value: adaptivelab
+        - name: GITHUB_REPOSITORY
+          value: smarty-nx
+        - name: GITHUB_PAT
+          valueFrom:
+            secretKeyRef:
+              key: pat
+              name: runner-secrets
+        - name: ADDITIONAL_PACKAGES
+        - name: DOCKER_HOST
+          value: tcp://dind.docker:2376
+        image: smartynxrunner.azurecr.io/smartynxrunner:v2.314.1
+        imagePullPolicy: Always
+        name: smartynx-runner
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: sundae-github-actions-runner-pull-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
